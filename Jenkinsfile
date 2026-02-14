@@ -16,7 +16,7 @@ pipeline {
             }
         }
 
-        stage('Setup Python Virtual Environment') {
+        stage('Train Model') {
             agent {
                 docker {
                     image 'python:3.10-slim'
@@ -27,22 +27,10 @@ pipeline {
                 sh '''
                     python3 -m venv venv
                     . venv/bin/activate
+
                     pip install --upgrade pip
                     pip install -r requirements.txt
-                '''
-            }
-        }
 
-        stage('Train Model') {
-            agent {
-                docker {
-                    image 'python:3.10-slim'
-                    args '-u root'
-                }
-            }
-            steps {
-                sh '''
-                    . venv/bin/activate
                     python scripts/train.py
 
                     mkdir -p app/artifacts
@@ -105,7 +93,9 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'app/artifacts/**', fingerprint: true
+            node {
+                archiveArtifacts artifacts: 'app/artifacts/**', fingerprint: true
+            }
         }
     }
 }
