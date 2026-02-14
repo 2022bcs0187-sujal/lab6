@@ -106,7 +106,7 @@ pipeline {
 
     post {
         always {
-            node('any') {
+            node {
                 archiveArtifacts artifacts: 'app/artifacts/**', fingerprint: true
             }
         }
