@@ -50,7 +50,8 @@ joblib.dump(model, MODEL_PATH)
 
 results = {
     "mse": mse,
-    "r2": r2
+    "r2": r2,
+    "accuracy" : r2
 }
 
 with open(RESULTS_PATH, "w") as f:
