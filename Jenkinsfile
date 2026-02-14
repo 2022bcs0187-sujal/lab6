@@ -39,9 +39,8 @@ pipeline {
                     mkdir -p app/artifacts
                     cp output/results/results.json app/artifacts/metrics.json
                     '''
-             }
+            }
         }
-
 
         stage('Read Accuracy') {
             steps {
@@ -68,27 +67,29 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            agent any
             when {
                 expression { env.IS_BETTER == 'true' }
             }
             steps {
                 sh '''
-                echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-                docker build -t $IMAGE_NAME:${BUILD_NUMBER} .
-                docker tag $IMAGE_NAME:${BUILD_NUMBER} $IMAGE_NAME:latest
-                '''
+        echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+        docker build -t $IMAGE_NAME:${BUILD_NUMBER} .
+        docker tag $IMAGE_NAME:${BUILD_NUMBER} $IMAGE_NAME:latest
+        '''
             }
         }
 
         stage('Push Docker Image') {
+            agent any
             when {
                 expression { env.IS_BETTER == 'true' }
             }
             steps {
                 sh '''
-                docker push $IMAGE_NAME:${BUILD_NUMBER}
-                docker push $IMAGE_NAME:latest
-                '''
+        docker push $IMAGE_NAME:${BUILD_NUMBER}
+        docker push $IMAGE_NAME:latest
+        '''
             }
         }
     }
