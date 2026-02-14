@@ -1,20 +1,18 @@
 pipeline {
     agent {
-    docker {
-        image 'python:3.10-slim'
-        args '-u root'
+        docker {
+            image 'python:3.10-slim'
+            args '-u root'
+        }
     }
-}
-
 
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
         BEST_ACCURACY   = credentials('best-accuracy')
-        IMAGE_NAME      = "yourdockerhubusername/ml-model"
+        IMAGE_NAME      = 'yourdockerhubusername/ml-model'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -36,7 +34,7 @@ pipeline {
             steps {
                 sh '''
                 . venv/bin/activate
-                python train.py
+                python scripts/train.py
                 '''
             }
         }
@@ -54,12 +52,12 @@ pipeline {
         stage('Compare Accuracy') {
             steps {
                 script {
-                    env.IS_BETTER = "false"
+                    env.IS_BETTER = 'false'
                     if (env.CURRENT_ACCURACY.toFloat() > BEST_ACCURACY.toFloat()) {
-                        env.IS_BETTER = "true"
-                        echo "New model is better"
+                        env.IS_BETTER = 'true'
+                        echo 'New model is better'
                     } else {
-                        echo "New model is NOT better"
+                        echo 'New model is NOT better'
                     }
                 }
             }
@@ -67,7 +65,7 @@ pipeline {
 
         stage('Build Docker Image') {
             when {
-                expression { env.IS_BETTER == "true" }
+                expression { env.IS_BETTER == 'true' }
             }
             steps {
                 sh '''
@@ -80,7 +78,7 @@ pipeline {
 
         stage('Push Docker Image') {
             when {
-                expression { env.IS_BETTER == "true" }
+                expression { env.IS_BETTER == 'true' }
             }
             steps {
                 sh '''
