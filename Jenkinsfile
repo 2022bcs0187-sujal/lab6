@@ -1,5 +1,11 @@
 pipeline {
-    agent any
+    agent {
+    docker {
+        image 'python:3.10-slim'
+        args '-u root'
+    }
+}
+
 
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
