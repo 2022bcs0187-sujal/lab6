@@ -67,16 +67,20 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            sh '''
-        echo $DOCKERHUB_CREDS_PSW | docker login \
-        -u $DOCKERHUB_CREDS_USR --password-stdin
+            steps {
+                sh '''
+            echo $DOCKERHUB_CREDS_PSW | docker login \
+            -u $DOCKERHUB_CREDS_USR --password-stdin
 
-        docker build -t 2022bcs0187sujal/wine-quality:latest .
-    '''
+            docker build -t 2022bcs0187sujal/wine-quality:latest .
+        '''
+            }
         }
 
         stage('Push Docker Image') {
-            sh 'docker push 2022bcs0187sujal/wine-quality:latest'
+            steps {
+                sh 'docker push 2022bcs0187sujal/wine-quality:latest'
+            }
         }
     }
 
