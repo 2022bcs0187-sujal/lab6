@@ -1,48 +1,58 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.10-slim'
-            args '-u root'
-        }
-    }
+    agent none
 
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
         BEST_ACCURACY   = credentials('best-accuracy')
-        IMAGE_NAME      = 'yourdockerhubusername/ml-model'
+        IMAGE_NAME      = '2022bcs0187sujal/wine-quality'
     }
 
     stages {
+
         stage('Checkout') {
+            agent any
             steps {
                 checkout scm
             }
         }
 
         stage('Setup Python Virtual Environment') {
+            agent {
+                docker {
+                    image 'python:3.10-slim'
+                    args '-u root'
+                }
+            }
             steps {
                 sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install --upgrade pip
-                pip install -r requirements.txt
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
         }
 
         stage('Train Model') {
+            agent {
+                docker {
+                    image 'python:3.10-slim'
+                    args '-u root'
+                }
+            }
             steps {
-                    sh '''
+                sh '''
                     . venv/bin/activate
                     python scripts/train.py
 
                     mkdir -p app/artifacts
                     cp output/results/results.json app/artifacts/metrics.json
-                    '''
+                '''
             }
         }
 
         stage('Read Accuracy') {
+            agent any
             steps {
                 script {
                     def metrics = readJSON file: 'app/artifacts/metrics.json'
@@ -53,6 +63,7 @@ pipeline {
         }
 
         stage('Compare Accuracy') {
+            agent any
             steps {
                 script {
                     env.IS_BETTER = 'false'
@@ -67,19 +78,27 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            agent any
+            when {
+                expression { env.IS_BETTER == 'true' }
+            }
             steps {
                 sh '''
-            echo $DOCKERHUB_CREDS_PSW | docker login \
-            -u $DOCKERHUB_CREDS_USR --password-stdin
+                    echo $DOCKERHUB_CREDS_PSW | docker login \
+                    -u $DOCKERHUB_CREDS_USR --password-stdin
 
-            docker build -t 2022bcs0187sujal/wine-quality:latest .
-        '''
+                    docker build -t $IMAGE_NAME:latest .
+                '''
             }
         }
 
         stage('Push Docker Image') {
+            agent any
+            when {
+                expression { env.IS_BETTER == 'true' }
+            }
             steps {
-                sh 'docker push 2022bcs0187sujal/wine-quality:latest'
+                sh 'docker push $IMAGE_NAME:latest'
             }
         }
     }
