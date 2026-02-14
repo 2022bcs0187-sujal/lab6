@@ -32,12 +32,16 @@ pipeline {
 
         stage('Train Model') {
             steps {
-                sh '''
-                . venv/bin/activate
-                python scripts/train.py
-                '''
-            }
+                    sh '''
+                    . venv/bin/activate
+                    python scripts/train.py
+
+                    mkdir -p app/artifacts
+                    cp output/results/results.json app/artifacts/metrics.json
+                    '''
+             }
         }
+
 
         stage('Read Accuracy') {
             steps {
