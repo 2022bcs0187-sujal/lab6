@@ -67,30 +67,16 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent any
-            when {
-                expression { env.IS_BETTER == 'true' }
-            }
-            steps {
-                sh '''
-        echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-        docker build -t $IMAGE_NAME:${BUILD_NUMBER} .
-        docker tag $IMAGE_NAME:${BUILD_NUMBER} $IMAGE_NAME:latest
-        '''
-            }
+            sh '''
+        echo $DOCKERHUB_CREDS_PSW | docker login \
+        -u $DOCKERHUB_CREDS_USR --password-stdin
+
+        docker build -t 2022bcs0187sujal/wine-quality:latest .
+    '''
         }
 
         stage('Push Docker Image') {
-            agent any
-            when {
-                expression { env.IS_BETTER == 'true' }
-            }
-            steps {
-                sh '''
-        docker push $IMAGE_NAME:${BUILD_NUMBER}
-        docker push $IMAGE_NAME:latest
-        '''
-            }
+            sh 'docker push 2022bcs0187sujal/wine-quality:latest'
         }
     }
 
