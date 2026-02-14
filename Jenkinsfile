@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any   // 🔥 THIS fixes everything
 
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
@@ -10,7 +10,6 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            agent any
             steps {
                 checkout scm
             }
@@ -44,7 +43,6 @@ pipeline {
                 sh '''
                     . venv/bin/activate
                     python scripts/train.py
-
                     mkdir -p app/artifacts
                     cp output/results/results.json app/artifacts/metrics.json
                 '''
@@ -52,7 +50,6 @@ pipeline {
         }
 
         stage('Read Accuracy') {
-            agent any
             steps {
                 script {
                     def metrics = readJSON file: 'app/artifacts/metrics.json'
@@ -63,11 +60,9 @@ pipeline {
         }
 
         stage('Compare Accuracy') {
-            agent any
             steps {
                 script {
                     env.IS_BETTER = 'false'
-
                     if (env.CURRENT_ACCURACY.toFloat() > BEST_ACCURACY.toFloat()) {
                         env.IS_BETTER = 'true'
                         echo 'New model is better'
@@ -79,7 +74,6 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent any
             when {
                 expression { env.IS_BETTER == 'true' }
             }
@@ -87,14 +81,12 @@ pipeline {
                 sh '''
                     echo $DOCKERHUB_CREDS_PSW | docker login \
                     -u $DOCKERHUB_CREDS_USR --password-stdin
-
                     docker build -t $IMAGE_NAME:latest .
                 '''
             }
         }
 
         stage('Push Docker Image') {
-            agent any
             when {
                 expression { env.IS_BETTER == 'true' }
             }
@@ -106,9 +98,7 @@ pipeline {
 
     post {
         always {
-            node {
-                archiveArtifacts artifacts: 'app/artifacts/**', fingerprint: true
-            }
+            archiveArtifacts artifacts: 'app/artifacts/**', fingerprint: true
         }
     }
 }
